@@ -1,6 +1,7 @@
-export const scanImageApi = async (file: File) => {
+export const scanImageApi = async (file: File, provider: string) => {
   const formData = new FormData();
   formData.append('image', file);
+  formData.append('provider', provider);
 
   const response = await fetch('/api/inspect', {
     method: 'POST',

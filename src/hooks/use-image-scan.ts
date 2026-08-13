@@ -8,7 +8,7 @@ export const useImageScan = () => {
   const [scanResults, setScanResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileSelect = async (file: File) => {
+  const handleFileSelect = async (file: File, provider: string = 'gemini') => {
     if (!file) return;
 
     setSelectedFile(file);
@@ -21,7 +21,7 @@ export const useImageScan = () => {
     setError(null);
 
     try {
-      const result = await scanImageApi(file);
+      const result = await scanImageApi(file, provider);
       setScanResults(result);
     } catch (err: any) {
       setError(err.message || "Failed to analyze image.");
