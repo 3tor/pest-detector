@@ -11,14 +11,14 @@ export const Sidebar = () => {
     {
       title: 'INSPECT',
       items: [
-        { id: 'dashboard', href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'dashboard', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'history', href: '/history', label: 'History', icon: History },
       ]
     },
     {
       title: 'LEARN',
       items: [
-        { id: 'how-it-works', href: '/how-it-works', label: 'How it works', icon: Info },
+        { id: 'how-it-works', href: '/', label: 'How it works', icon: Info },
       ]
     },
     {

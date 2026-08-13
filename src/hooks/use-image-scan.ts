@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { scanImageApi } from '@/lib/services/scan-service';
+import { saveToHistory } from '@/lib/utils/history-storage';
 
 export const useImageScan = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,6 +23,8 @@ export const useImageScan = () => {
     try {
       const result = await scanImageApi(file, provider);
       setScanResults(result);
+
+      saveToHistory(result.summary, provider);
     } catch (err: any) {
       setError(err.message || "Failed to analyze image.");
     } finally {
