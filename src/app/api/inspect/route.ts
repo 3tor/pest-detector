@@ -20,20 +20,31 @@ export async function POST(request: Request) {
     // ==========================================
     if (provider === 'huggingface') {
       const hfResponse = await fetch(
-        "https://api-inference.huggingface.co/models/dima806/plant_diseases_classification",
+        "https://router.huggingface.co/hf-inference/models/linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification",
         {
-          headers: { Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}` },
+          headers: { 
+            Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+            "Content-Type": file.type // Pass the exact image MIME type
+          },
           method: "POST",
           body: arrayBuffer,
         }
       );
 
       if (!hfResponse.ok) {
-        throw new Error("Hugging Face API failed to respond.");
+        // Extract the actual error message from Hugging Face
+        const errorData = await hfResponse.json().catch(() => ({}));
+        
+        // Handle the standard 503 "Model is loading" cold start
+        if (hfResponse.status === 503 && errorData.estimated_time) {
+          throw new Error(`The Hugging Face model is currently waking up. Please try again in about ${Math.ceil(errorData.estimated_time)} seconds.`);
+        }
+        
+        // Throw the specific Hugging Face error (or fallback to status text)
+        throw new Error(`Hugging Face Error: ${errorData.error || hfResponse.statusText}`);
       }
 
       const hfData = await hfResponse.json();
-      console.log("hugging face data response", hfData);
       const topResult = hfData[0]; // Gets the highest confidence prediction
 
       // HF returns labels like "Tomato___Early_blight". We must parse this.

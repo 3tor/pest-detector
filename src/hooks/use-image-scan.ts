@@ -7,16 +7,15 @@ export const useImageScan = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null); 
 
   const handleFileSelect = async (file: File, provider: string = 'gemini') => {
     if (!file) return;
 
     setSelectedFile(file);
-    
-    // Generate a temporary local URL for the preview image
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreviewUrl(previewUrl);
-    
+    setSelectedProvider(provider); 
+    setImagePreviewUrl(URL.createObjectURL(file));
     setIsScanning(true);
     setError(null);
 
@@ -34,6 +33,7 @@ export const useImageScan = () => {
     setSelectedFile(null);
     setScanResults(null);
     setError(null);
+    setSelectedProvider(null); 
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
       setImagePreviewUrl(null);
@@ -53,6 +53,7 @@ export const useImageScan = () => {
     isScanning,
     scanResults,
     error,
+    selectedProvider, 
     handleFileSelect,
     resetScan
   };

@@ -4,16 +4,19 @@ interface ScanResultsProps {
   imagePreviewUrl: string;
   file: File;
   summary: any;
+  provider: string | null; 
   onReset: () => void;
 }
 
-export const ScanResultsView = ({ imagePreviewUrl, file, summary, onReset }: ScanResultsProps) => {
+export const ScanResultsView = ({ imagePreviewUrl, file, summary, provider, onReset }: ScanResultsProps) => {
   const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
   
-  // Determine badge color dynamically based on severity
   const badgeColor = summary.status === 'Healthy' 
     ? 'bg-green-500' 
     : (summary.severity === 'High' ? 'bg-red-500' : 'bg-orange-500');
+
+  // Format the provider name for display
+  const displayProvider = provider === 'huggingface' ? 'Hugging Face' : 'Google Gemini';
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col lg:flex-row gap-8">
@@ -47,6 +50,7 @@ export const ScanResultsView = ({ imagePreviewUrl, file, summary, onReset }: Sca
           <p><span className="text-gray-500 mr-2">Health Status:</span> <span className="font-medium text-gray-900">{summary.status}</span></p>
           <p><span className="text-gray-500 mr-2">Severity Level:</span> <span className="font-medium text-gray-900">{summary.severity}</span></p>
           <p><span className="text-gray-500 mr-2">AI Confidence:</span> <span className="font-medium text-gray-900">{summary.confidence}</span></p>
+          <p><span className="text-gray-500 mr-2">Vision Engine:</span> <span className="font-medium text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded">{displayProvider}</span></p>
         </div>
 
         <div>

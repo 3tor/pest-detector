@@ -15,7 +15,8 @@ export default function DashboardPage() {
     imagePreviewUrl,
     isScanning, 
     scanResults, 
-    error,           
+    error,   
+    selectedProvider,        
     handleFileSelect, 
     resetScan 
   } = useImageScan();
@@ -70,6 +71,7 @@ export default function DashboardPage() {
                 imagePreviewUrl={imagePreviewUrl}
                 file={selectedFile}
                 summary={scanResults.summary}
+                provider={selectedProvider}
                 onReset={resetScan}
               />
               <ScanBreakdownGrid breakdown={scanResults.breakdown} />
