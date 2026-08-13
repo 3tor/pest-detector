@@ -129,6 +129,7 @@ export async function POST(request: Request) {
     return NextResponse.json(JSON.parse(result.response.text()));
 
   } catch (error: any) {
+    console.log("error", error);
     if (error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
       return NextResponse.json({ error: 'Connection to the vision service timed out. Please check your internet connection and try again.' }, { status: 504 });
     }
