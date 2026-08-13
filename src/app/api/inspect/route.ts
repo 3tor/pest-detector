@@ -15,9 +15,111 @@ export async function POST(request: Request) {
     }
 
     const arrayBuffer = await file.arrayBuffer();
+    const base64Data = Buffer.from(arrayBuffer).toString('base64');
 
     // ==========================================
-    // ROUTE 1: HUGGING FACE INFERENCE API
+    // ROUTE 1: PLANT.ID (Kindwise API v3)
+    // ==========================================
+    if (provider === 'plantid') {
+      const plantIdResponse = await fetch(
+        "https://plant.id/api/v3/identification?details=treatment,description,common_names",
+        {
+          method: "POST",
+          headers: {
+            "Api-Key": process.env.PLANT_ID_API_KEY || '',
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            images: [base64Data],
+            health: "all", // This ensures we get BOTH the crop name and the disease assessment
+          }),
+        }
+      );
+
+      if (!plantIdResponse.ok) {
+        const errorData = await plantIdResponse.json().catch(() => ({}));
+        throw new Error(`Plant.id Error: ${errorData.error || plantIdResponse.statusText}`);
+      }
+
+      const plantData = await plantIdResponse.json();
+      
+      // 1. Parse Plant.id Classification (Top Result)
+      const topClassification = plantData.result?.classification?.suggestions?.[0];
+      // Use common name if available, otherwise fallback to scientific name
+      const cropName = topClassification?.details?.common_names?.[0] || topClassification?.name || "Unknown Plant";
+      const classificationConfidence = topClassification?.probability 
+        ? (topClassification.probability * 100).toFixed(1) 
+        : "Unknown";
+
+      // 2. Parse Plant.id Health Assessment (v3 Structure)
+      const isHealthy = plantData.result?.is_healthy?.binary ?? true;
+      
+      let diseaseName = "Healthy";
+      let severity = "None";
+      let status = "Healthy";
+      
+      // Default fallback text
+      let immediateActionDesc = isHealthy ? "No action needed." : `Inspect the ${cropName} closely for signs of disease and isolate if necessary.`;
+      let organicTreatmentDesc = isHealthy ? "Maintain standard care." : "Check local agricultural guidelines for organic treatments.";
+      let chemicalTreatmentDesc = isHealthy ? "Not required." : "Consider targeted fungicides or pesticides.";
+      let preventionDesc = "Maintain proper airflow, monitor humidity, and avoid overhead watering.";
+
+      // If a disease is detected, extract the top suggestion
+      const diseaseSuggestions = plantData.result?.disease?.suggestions || [];
+      
+      if (!isHealthy && diseaseSuggestions.length > 0) {
+        const topDisease = diseaseSuggestions[0];
+        diseaseName = topDisease.name;
+        severity = "Action Required";
+        status = "Infected";
+
+        // 3. Extract the detailed treatment info returned by Plant.id API
+        const details = topDisease.details || {};
+        
+        if (details.description) {
+            immediateActionDesc = details.description;
+        }
+        
+        if (details.treatment) {
+            organicTreatmentDesc = details.treatment.biological || organicTreatmentDesc;
+            chemicalTreatmentDesc = details.treatment.chemical || chemicalTreatmentDesc;
+            preventionDesc = details.treatment.prevention || preventionDesc;
+        }
+      }
+
+      // Transform Plant.id output into our exact UI schema
+      return NextResponse.json({
+        summary: {
+          crop_name: cropName,
+          disease_name: diseaseName,
+          status: status,
+          confidence: `${classificationConfidence}%`,
+          severity: severity,
+          badge: isHealthy ? "Healthy" : "High Risk"
+        },
+        breakdown: {
+          immediate_action: { 
+            title: "Diagnosis & Description", 
+            description: immediateActionDesc 
+          },
+          organic_treatment: { 
+            title: "Organic / Biological Treatment", 
+            description: organicTreatmentDesc 
+          },
+          chemical_treatment: { 
+            title: "Chemical Treatment", 
+            description: chemicalTreatmentDesc 
+          },
+          prevention: { 
+            title: "Future Prevention", 
+            description: preventionDesc 
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // ROUTE 2: HUGGING FACE INFERENCE API
     // ==========================================
     if (provider === 'huggingface') {
       const hfResponse = await fetch(
@@ -25,7 +127,7 @@ export async function POST(request: Request) {
         {
           headers: { 
             Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-            "Content-Type": file.type // Pass the exact image MIME type
+            "Content-Type": file.type 
           },
           method: "POST",
           body: arrayBuffer,
@@ -33,22 +135,16 @@ export async function POST(request: Request) {
       );
 
       if (!hfResponse.ok) {
-        // Extract the actual error message from Hugging Face
         const errorData = await hfResponse.json().catch(() => ({}));
-        
-        // Handle the standard 503 "Model is loading" cold start
         if (hfResponse.status === 503 && errorData.estimated_time) {
           throw new Error(`The Hugging Face model is currently waking up. Please try again in about ${Math.ceil(errorData.estimated_time)} seconds.`);
         }
-        
-        // Throw the specific Hugging Face error (or fallback to status text)
         throw new Error(`Hugging Face Error: ${errorData.error || hfResponse.statusText}`);
       }
 
       const hfData = await hfResponse.json();
       const topResult = hfData[0]; // Gets the highest confidence prediction
 
-      // HF returns labels like "Tomato___Early_blight". We must parse this.
       let cropName = "Unknown Plant";
       let diseaseName = topResult.label;
 
@@ -81,9 +177,8 @@ export async function POST(request: Request) {
     }
 
     // ==========================================
-    // ROUTE 2: GOOGLE GEMINI (Default)
+    // ROUTE 3: GOOGLE GEMINI (Default)
     // ==========================================
-    const base64Data = Buffer.from(arrayBuffer).toString('base64');
     const model = genAI.getGenerativeModel({
       model: 'gemini-3.6-flash',
       generationConfig: { responseMimeType: "application/json" }
@@ -133,6 +228,6 @@ export async function POST(request: Request) {
     if (error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
       return NextResponse.json({ error: 'Connection to the vision service timed out. Please check your internet connection and try again.' }, { status: 504 });
     }
-    return NextResponse.json({ error: 'An unexpected error occurred while analyzing the crop. Please try again.' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'An unexpected error occurred while analyzing the crop. Please try again.' }, { status: 500 });
   }
 }

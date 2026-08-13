@@ -36,7 +36,8 @@ export const UploadDropzone = ({ onFileSelected, isScanning }: UploadDropzonePro
           className="w-full bg-white border border-gray-200 text-gray-700 py-2 px-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] disabled:opacity-50"
         >
           <option value="gemini">Google Gemini 3.6 Flash</option>
-          <option value="huggingface">Hugging Face (PlantVillage Model)</option>
+          <option value="plantid">Plant.id (Kindwise)</option>
+          <option value="huggingface">Hugging Face (MobileNet)</option>
         </select>
       </div>
 

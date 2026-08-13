@@ -15,8 +15,14 @@ export const ScanResultsView = ({ imagePreviewUrl, file, summary, provider, onRe
     ? 'bg-green-500' 
     : (summary.severity === 'High' ? 'bg-red-500' : 'bg-orange-500');
 
+  const providerNames: Record<string, string> = {
+    gemini: 'Google Gemini',
+    huggingface: 'Hugging Face',
+    plantid: 'Plant.id',
+  };
+
   // Format the provider name for display
-  const displayProvider = provider === 'huggingface' ? 'Hugging Face' : 'Google Gemini';
+  const displayProvider = (provider && providerNames[provider]) || 'Google Gemini';
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col lg:flex-row gap-8">
@@ -42,7 +48,7 @@ export const ScanResultsView = ({ imagePreviewUrl, file, summary, provider, onRe
       </div>
 
       <div className="w-full lg:w-2/5 flex flex-col justify-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">{summary.disease_name}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Detected Disease: {summary.disease_name}</h2>
         <p className="text-sm font-medium text-[#2563EB] mb-4">Detected Crop: {summary.crop_name}</p>
         <div className="h-px w-full bg-gray-100 mb-6"></div>
         
