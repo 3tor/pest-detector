@@ -67,14 +67,17 @@ export default function DashboardPage() {
           {/* State 4: Results Display */}
           {scanResults && !isScanning && !error && selectedFile && imagePreviewUrl && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <ScanResultsView 
-                imagePreviewUrl={imagePreviewUrl}
-                file={selectedFile}
-                summary={scanResults.summary}
-                provider={selectedProvider}
-                onReset={resetScan}
-              />
-              <ScanBreakdownGrid breakdown={scanResults.breakdown} />
+              {/* Wrap both the summary and treatment breakdown so the PDF includes the complete report */}
+              <div id="scan-results-container" className="p-4 bg-white rounded-2xl space-y-6">
+                <ScanResultsView 
+                  imagePreviewUrl={imagePreviewUrl}
+                  file={selectedFile}
+                  summary={scanResults.summary}
+                  provider={selectedProvider}
+                  onReset={resetScan}
+                />
+                <ScanBreakdownGrid breakdown={scanResults.breakdown} />
+              </div>
             </div>
           )}
 
