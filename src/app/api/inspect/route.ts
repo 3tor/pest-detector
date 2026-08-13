@@ -71,8 +71,21 @@ export async function POST(request: Request) {
 
     return NextResponse.json(parsedData);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    return NextResponse.json({ error: 'Failed to analyze crop' }, { status: 500 });
+    
+    // Check if the error is a timeout or network fetch failure
+    if (error.message?.includes('fetch failed') || error.message?.includes('timeout')) {
+      return NextResponse.json(
+        { error: 'The connection to the AI service timed out. Please check your internet connection and try again.' }, 
+        { status: 504 }
+      );
+    }
+
+    // Generic fallback error
+    return NextResponse.json(
+      { error: 'An unexpected error occurred while analyzing the crop. Please try again.' }, 
+      { status: 500 }
+    );
   }
 }

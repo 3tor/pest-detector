@@ -8,7 +8,9 @@ export const scanImageApi = async (file: File) => {
   });
 
   if (!response.ok) {
-    throw new Error(`Scan failed: ${response.statusText}`);
+    // Attempt to read the custom error message from the backend JSON
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.error || `Scan failed: ${response.statusText}`);
   }
 
   return response.json();
