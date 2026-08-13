@@ -1,27 +1,30 @@
+'use client';
+
 import React from 'react';
-import { LayoutDashboard, History, HelpCircle, BookOpen, MessageSquare, Info } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LayoutDashboard, History, MessageSquare, Info } from 'lucide-react';
 
 export const Sidebar = () => {
+  const pathname = usePathname(); 
   const navSections = [
     {
       title: 'INSPECT',
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, active: true },
-        { id: 'history', label: 'History', icon: History, active: false },
+        { id: 'dashboard', href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'history', href: '/history', label: 'History', icon: History },
       ]
     },
     {
       title: 'LEARN',
       items: [
-        { id: 'how-it-works', label: 'How works', icon: Info, active: false },
-        { id: 'watermarks-guide', label: 'Watermarks guide', icon: BookOpen, active: false },
+        { id: 'how-it-works', href: '/how-it-works', label: 'How it works', icon: Info },
       ]
     },
     {
       title: 'SUPPORT',
       items: [
-        { id: 'help', label: 'Help & docs', icon: HelpCircle, active: false },
-        { id: 'feedback', label: 'Feedback', icon: MessageSquare, active: false },
+        { id: 'feedback', href: '/feedback', label: 'Feedback', icon: MessageSquare },
       ]
     }
   ];
@@ -42,18 +45,23 @@ export const Sidebar = () => {
             <div className="space-y-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
+                
+                // Dynamically check if this link matches the current URL
+                const isActive = pathname === item.href; 
+
                 return (
-                  <button
+                  <Link
                     key={item.id}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      item.active
+                    href={item.href}
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
                         ? 'text-[#2563EB] bg-blue-50/50'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-[#2563EB]'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${item.active ? 'text-[#2563EB]' : 'text-gray-400'}`} />
+                    <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-[#2563EB]' : 'text-gray-400 group-hover:text-[#2563EB]'}`} />
                     <span>{item.label}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
