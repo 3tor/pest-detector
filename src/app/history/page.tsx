@@ -25,6 +25,7 @@ export default function HistoryPage() {
     gemini: 'Google Gemini',
     huggingface: 'Hugging Face',
     plantid: 'Plant.id',
+    groq: 'Groq (Llama 3.2 Vision)',
   };
 
   return (

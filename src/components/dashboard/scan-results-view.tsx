@@ -26,6 +26,7 @@ export const ScanResultsView = ({ imagePreviewUrl, file, summary, provider, onRe
     gemini: 'Google Gemini',
     huggingface: 'Hugging Face',
     plantid: 'Plant.id',
+    groq: 'Groq (Llama 3.2 Vision)',
   };
 
   const displayProvider = (provider && providerNames[provider]) || 'Google Gemini';
@@ -109,15 +110,18 @@ export const ScanResultsView = ({ imagePreviewUrl, file, summary, provider, onRe
             )}
           </button>
 
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="px-5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-sm rounded-full transition-colors shadow-sm flex items-center gap-2"
-          >
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            Talk to Expert
-          </button>
+          {/* Conditionally render the Consultation Button only if NOT healthy */}
+          {summary.status !== 'Healthy' && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="px-5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white font-medium text-sm rounded-full transition-colors shadow-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Talk to Expert
+            </button>
+          )}
         </div>
       </div>
 

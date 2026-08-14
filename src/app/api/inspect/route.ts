@@ -177,6 +177,91 @@ export async function POST(request: Request) {
     }
 
     // ==========================================
+    // ROUTE 4: GROQ (LLAMA 3.2 VISION)
+    // ==========================================
+    if (provider === 'groq') {
+      // 1. Sanitize the base64 string
+      let sanitizedBase64 = base64Data.replace(/\s+/g, '');
+      const cleanBase64 = sanitizedBase64.startsWith('data:image') 
+        ? sanitizedBase64 
+        : `data:image/jpeg;base64,${sanitizedBase64}`;
+
+      const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "qwen/qwen3.6-27b", // Groq's fast vision model
+          messages: [
+            {
+              role: "user",
+              content: [
+                { 
+                  type: "text", 
+                  text: `You are an expert plant pathologist. You must output ONLY valid JSON. Do not include any explanations, greetings, or markdown code blocks. 
+                  
+                  Analyze this plant leaf and return ONLY a JSON object with this exact structure:
+                  {
+                    "summary": {
+                      "crop_name": "string",
+                      "disease_name": "string",
+                      "status": "Healthy or Infected",
+                      "confidence": "e.g., 95%",
+                      "severity": "None, Low, Medium, or High",
+                      "badge": "Healthy, Monitor, or High Risk"
+                    },
+                    "breakdown": {
+                      "immediate_action": { "title": "Diagnosis", "description": "string" },
+                      "organic_treatment": { "title": "Organic Treatment", "description": "string" },
+                      "chemical_treatment": { "title": "Chemical Treatment", "description": "string" },
+                      "prevention": { "title": "Prevention", "description": "string" }
+                    }
+                  }` 
+                },
+                { 
+                  type: "image_url", 
+                  image_url: { 
+                    url: cleanBase64
+                  } 
+                }
+              ]
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1500
+        })
+      });
+
+      if (!groqResponse.ok) {
+        const errorText = await groqResponse.text();
+        let errorMessage = groqResponse.statusText;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error?.message || errorJson.error || errorText;
+        } catch (e) {
+          errorMessage = errorText;
+        }
+        throw new Error(`Groq API Error: ${errorMessage}`);
+      }
+
+      const groqData = await groqResponse.json();
+      let jsonContent = groqData.choices[0].message.content.trim();
+
+      // 1. Strip out <think> blocks from reasoning models
+      jsonContent = jsonContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+      // 2. Ensure clean JSON parsing (remove markdown code blocks)
+      if (jsonContent.startsWith('```')) {
+        jsonContent = jsonContent.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '');
+      }
+
+      const parsedResult = JSON.parse(jsonContent);
+      return NextResponse.json(parsedResult);
+    }
+
+    // ==========================================
     // ROUTE 3: GOOGLE GEMINI (Default)
     // ==========================================
     const model = genAI.getGenerativeModel({
