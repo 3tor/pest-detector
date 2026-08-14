@@ -9,9 +9,17 @@ export interface ConsultationRequest {
   status: string;
 }
 
+export interface ConsultationInput {
+  scanCrop: string;
+  scanDisease: string;
+  agronomistName: string;
+  contactInfo: string;
+  notes: string;
+}
+
 const STORAGE_KEY = 'pest_detector_consultations';
 
-export const saveConsultation = (request: Omit) => {
+export const saveConsultation = (request: ConsultationInput) => {
   if (typeof window === 'undefined') return;
 
   const newConsultation: ConsultationRequest = {
